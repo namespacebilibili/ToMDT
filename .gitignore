@@ -1,0 +1,2 @@
+*.pickle
+overcooked_ai/src/human_aware_rl/ppo/reproduced_results/**

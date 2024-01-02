@@ -1,0 +1,35 @@
+===========Beta: 0.01=============
+Avg rew: 44.00 (std: 23.32, se: 10.43); avg len: 400.00; : 100%|█| 5/5 [00:59<00:00,
+Avg rew: 28.00 (std: 20.40, se: 9.12); avg len: 400.00; : 100%|█| 5/5 [01:01<00:00, 
+Avg rew: 20.00 (std: 12.65, se: 5.66); avg len: 400.00; : 100%|█| 5/5 [01:00<00:00, 
+Avg rew: 0.00 (std: 0.00, se: 0.00); avg len: 400.00; : 100%|█| 5/5 [00:59<00:00, 11
+Avg rew: 0.00 (std: 0.00, se: 0.00); avg len: 400.00; : 100%|█| 5/5 [01:00<00:00, 12
+{'cramped_room': (44.0, 10.430723848324238), 'asymmetric_advantages': (28.0, 9.121403400793103), 'coordination_ring': (20.0, 5.656854249492381), 'forced_coordination': (0.0, 0.0), 'counter_circuit_o_1order': (0.0, 0.0)}
+===========Beta: 0.1=============
+Avg rew: 56.00 (std: 29.39, se: 13.15); avg len: 400.00; : 100%|█| 5/5 [01:00<00:00,
+Avg rew: 40.00 (std: 25.30, se: 11.31); avg len: 400.00; : 100%|█| 5/5 [01:01<00:00,
+Avg rew: 12.00 (std: 9.80, se: 4.38); avg len: 400.00; : 100%|█| 5/5 [01:00<00:00, 1
+Avg rew: 0.00 (std: 0.00, se: 0.00); avg len: 400.00; : 100%|█| 5/5 [01:00<00:00, 12
+Avg rew: 0.00 (std: 0.00, se: 0.00); avg len:               Avg rew: 0.00 (std: 0.00, se: 0.00); avg len:               Avg rew: 0.00 (std: 0.00, se: 0.00); avg len:               Avg rew: 0.00 (std: 0.00, se: 0.00); avg len:               Avg rew: 0.00 (std: 0.00, se: 0.00); avg len:Avg rew: 0.00 (std: 0.00, se: 0.00); avg len:               Avg rew: 0.00 (std: 0.00, se: 0.00); avg len: 400.00; :  60%Avg rew: 0.00 (std: 0.00, se: 0.00); avg len: 400.00; :  60%Avg rew: 0.00 (std: 0.00, se: 0.00); avg len: 400.00; :  80%Avg rew: 0.00 (std: 0.00, se: 0.00); avg len: 400.00; :  80%Avg rew: 0.00 (std: 0.00, se: 0.00); avg len: 400.00; :  80%Avg rew: 0.00 (std: 0.00, se: 0.00); avg len: 400.00; : 100%Avg rew: 0.00 (std: 0.00, se: 0.00); avg len: 400.00; : 100%|█| 5/5 [01:02<00:00, 12
+{'cramped_room': (56.0, 13.145341380123986), 'asymmetric_advantages': (40.0, 11.313708498984761), 'coordination_ring': (12.0, 4.381780460041329), 'forced_coordination': (0.0, 0.0), 'counter_circuit_o_1order': (0.0, 0.0)}
+===========Beta: 1=============
+Avg rew: 96.00 (std: 26.53, se: 11.87); avg len: 400.00; : 1
+Avg rew: 96.00 (std: 58.51, se: 26.17); avg len: 400.00; : 1
+Avg rew: 104.00 (std: 14.97, se: 6.69); avg len: 400.00; : 1
+Avg rew: 12.00 (std: 9.80, se: 4.38); avg len: 400.00; : 100
+Avg rew: 20.00 (std: 12.65, se: 5.66); avg len: 400.00; : 10
+{'cramped_room': (96.0, 11.86591757935306), 'asymmetric_advantages': (96.0, 26.1686835740738), 'coordination_ring': (104.0, 6.693280212272604), 'forced_coordination': (12.0, 4.381780460041329), 'counter_circuit_o_1order': (20.0, 5.656854249492381)}
+===========Beta: 2=============
+Avg rew: 84.00 (std: 48.00, se: 21.47); avg len: 400.00; : 1
+Avg rew: 124.00 (std: 23.32, se: 10.43); avg len: 400.00; : 
+Avg rew: 92.00 (std: 16.00, se: 7.16); avg len: 400.00; : 10
+Avg rew: 16.00 (std: 8.00, se: 3.58); avg len: 400.00; : 100
+Avg rew: 24.00 (std: 14.97, se: 6.69); avg len: 400.00; : 10
+{'cramped_room': (84.0, 21.46625258399798), 'asymmetric_advantages': (124.0, 10.430723848324238), 'coordination_ring': (92.0, 7.155417527999327), 'forced_coordination': (16.0, 3.5777087639996634), 'counter_circuit_o_1order': (24.0, 6.693280212272604)}
+===========Beta: 10=============
+Avg rew: 116.00 (std: 52.76, se: 23.60); avg len: 400.00; : 
+Avg rew: 104.00 (std: 38.78, se: 17.34); avg len: 400.00; : 
+Avg rew: 108.00 (std: 37.09, se: 16.59); avg len: 400.00; : 
+Avg rew: 20.00 (std: 12.65, se: 5.66); avg len: 400.00; : 100%|█| 5/5 [01:0
+Avg rew: 8.00 (std: 9.80, se: 4.38); avg len: 400.00; : 100%|█| 5/5 [01:02<
+{'cramped_room': (116.0, 23.596609926004202), 'asymmetric_advantages': (104.0, 17.34358671094304), 'coordination_ring': (108.0, 16.589153082662175), 'forced_coordination': (20.0, 5.656854249492381), 'counter_circuit_o_1order': (8.0, 4.381780460041329)}
