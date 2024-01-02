@@ -13,7 +13,7 @@ setup(
     long_description_content_type="text/markdown",
     author="Micah Carroll",
     author_email="mdc@berkeley.edu",
-    url="https://github.com/HumanCompatibleAI/overcooked_ai",
+    url="https://github.com/namespacebilibili/overcooked_ai",
     download_url="https://github.com/HumanCompatibleAI/overcooked_ai/archive/refs/tags/1.1.0.tar.gz",
     packages=find_packages("src"),
     keywords=["Overcooked", "AI", "Reinforcement Learning"],
@@ -49,22 +49,6 @@ setup(
         "ipywidgets",
         "opencv-python",
     ],
-    # removed overlapping dependencies
-    extras_require={
-        "harl": [
-            "wandb",
-            "GitPython",
-            "memory_profiler",
-            "sacred",
-            "pymongo",
-            "matplotlib",
-            "requests",
-            "seaborn==0.9.0",
-            "ray[rllib]==2.0.0",
-            "protobuf",
-            "tensorflow==2.10",
-        ]
-    },
     entry_points={
         "console_scripts": [
             "overcooked-demo-up = overcooked_demo:start_server",

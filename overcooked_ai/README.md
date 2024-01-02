@@ -38,15 +38,6 @@ For simple usage of the environment, it's worthwhile considering using [this env
 
 ## Installation ☑️
 
-### Installing from PyPI 🗜
-
-You can install the pre-compiled wheel file using pip.
-```
-pip install overcooked-ai
-```
-Note that PyPI releases are stable but infrequent. For the most up-to-date development features, build from source with `pip install -e .`.
-
-
 ### Building from source 🔧
 
 It is useful to setup a conda environment with Python 3.7 (virtualenv works too):
@@ -60,18 +51,13 @@ Clone the repo
 ```
 git clone https://github.com/HumanCompatibleAI/overcooked_ai.git
 ```
-Finally, use python setup-tools to locally install
-
-If you just want to use the environment:
-
+Install requirements:
 ```
-pip install -e overcooked_ai/
+conda install --file requirements.txt
 ```
-
-If you also need the DRL implementations:
-
+And
 ```
-pip install -e overcooked_ai[harl]
+pip install -e overcooked_ai
 ```
 
 
