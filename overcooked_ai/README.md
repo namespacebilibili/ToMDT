@@ -49,7 +49,7 @@ conda activate overcooked_ai
 
 Clone the repo 
 ```
-git clone https://github.com/HumanCompatibleAI/overcooked_ai.git
+git clone https://github.com/namespacebilibili/overcooked_ai.git
 ```
 Install requirements:
 ```
