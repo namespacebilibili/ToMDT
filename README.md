@@ -1,5 +1,7 @@
 # PKU 2023 CoRe Project 🧑‍🍳🤖
 
+This is the repo for the PKU 2023 CoRe Submission *Decision Transformer for Modeling Theory of Mind in Multi-Agent Systems*.
+
 > Our code is based on the [Overcooked-AI](https://humancompatibleai.github.io) environment.
 
 ## Introduction 🥘
