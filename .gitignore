@@ -1,4 +1,5 @@
 model/*
+*.pickle
 .DS_Store
 overcooked_ai/src/human_aware_rl/ppo/reproduced_results/**
 overcooked_ai/src/human_aware_rl/imitation/proxy/**
