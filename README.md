@@ -1,4 +1,4 @@
-# Overcooked-AI 🧑‍🍳🤖
+# PKU 2023 CoRe Project 🧑‍🍳🤖
 
 > Our code is based on the [Overcooked-AI](https://humancompatibleai.github.io) environment.
 
