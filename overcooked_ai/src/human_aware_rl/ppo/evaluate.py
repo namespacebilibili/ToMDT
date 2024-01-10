@@ -38,7 +38,7 @@ layouts = [
 
 file_dir = os.path.dirname(os.path.abspath(__file__))
 bc_path = os.path.join(file_dir, "../imitation/bc_runs")
-
+proxy_path = os.path.join(file_dir, "../imitation/proxy")
 # directories where the BC agents are stored
 bc = [
     os.path.join(bc_path, "train/cramped_room"),
@@ -48,13 +48,15 @@ bc = [
     os.path.join(bc_path, "train/random3"),
 ]
 
+bc_all = os.path.join(bc_path, "train/all")
+
 # directories where the human proxy agents are stored
 hp = [
-    os.path.join(bc_path, "test/cramped_room"),
-    os.path.join(bc_path, "test/asymmetric_advantages"),
-    os.path.join(bc_path, "test/coordination_ring"),
-    os.path.join(bc_path, "test/random0"),
-    os.path.join(bc_path, "test/random3"),
+    os.path.join(proxy_path, "train/cramped_room"),
+    os.path.join(proxy_path, "train/asymmetric_advantages"),
+    os.path.join(proxy_path, "train/coordination_ring"),
+    os.path.join(proxy_path, "train/random0"),
+    os.path.join(proxy_path, "train/random3"),
 ]
 
 # reproduced agents ppo agents trained with bc, change the comments to the path of your trained agents
@@ -105,6 +107,7 @@ def evaluate_hp_bc(bc_model_path, hp_model_path, layout, order=0):
     The order parameter determines the placement of the agents
     """
     bc_model, bc_params = load_bc_model(bc_model_path)
+    bc_params["mdp_params"]["layout_name"] = layout
     bc_policy = BehaviorCloningPolicy.from_model(
         bc_model, bc_params, stochastic=True
     )
@@ -113,7 +116,7 @@ def evaluate_hp_bc(bc_model_path, hp_model_path, layout, order=0):
     hp_policy = BehaviorCloningPolicy.from_model(
         hp_model, hp_params, stochastic=True
     )
-
+    print(bc_params)
     base_ae = _get_base_ae(bc_params)
     base_env = base_ae.env
 
@@ -127,9 +130,34 @@ def evaluate_hp_bc(bc_model_path, hp_model_path, layout, order=0):
         ap = AgentPair(hp_agent, bc_agent)
     else:
         ap = AgentPair(bc_agent, hp_agent)
-    result = ae.evaluate_agent_pair(ap, 1, 400)
-    return result, result["ep_returns"]
-
+    result = ae.evaluate_agent_pair(ap, 5, 400)
+    hp_actions = []
+    predicted_actions = []
+    if order == 0:
+        for i in range(len(result["ep_actions"])):
+            for action in result["ep_actions"][i]:
+                hp_actions.append(Action.ACTION_TO_INDEX[action[0]])
+        for i in range(len(result["ep_infos"])):
+            for info in result["ep_infos"][i]:
+                predicted_actions.append(info['agent_infos'][1]['action1_predict'])
+    else:
+        for i in range(len(result["ep_actions"])):
+            for action in result["ep_actions"][i]:
+                hp_actions.append(Action.ACTION_TO_INDEX[action[1]])
+        for i in range(len(result["ep_infos"])):
+            for info in result["ep_infos"][i]:
+                predicted_actions.append(info['agent_infos'][0]['action1_predict'])
+    # mask all hp_actions=4
+    idx = np.where(np.array(hp_actions) != 4)[0]
+    hp_actions = np.array(hp_actions)[idx]
+    predicted_actions = np.array(predicted_actions)[idx]
+    acc = 0
+    # print(hp_actions, predicted_actions)
+    for i in range(len(hp_actions)):
+        if hp_actions[i] == predicted_actions[i]:
+            acc += 1
+    acc = acc / len(hp_actions)
+    return result, result["ep_returns"], acc
 
 def evaluate_ppo_bc(path, layout, order=0):
     """
@@ -175,48 +203,142 @@ def evaluate_human_ppo(trainer_path, layout):
     result = ae.evaluate_agent_pair(ap, 1, 400, display=False)
     return result, result["ep_returns"]
 
-def evaluate_hp_ppo(bc_model_path, trainer_path, layout, order=0):
+def evaluate_hp_ppo(hp_model_path, trainer_path, layout, order=0):
     """
     This function evaluates the performance between a PPO agent and a human proxy model (trained with the human testing data)
     The order parameter determines the placement of the agents
     """
-    bc_model, bc_params = load_bc_model(bc_model_path)
-    bc_policy = BehaviorCloningPolicy.from_model(
-        bc_model, bc_params, stochastic=True
+    hp_model, hp_params = load_bc_model(hp_model_path)
+    hp_policy = BehaviorCloningPolicy.from_model(
+        hp_model, hp_params, stochastic=True
     )
-    base_ae = _get_base_ae(bc_params)
+    # print(hp_params)
+    base_ae = _get_base_ae(hp_params)
     base_env = base_ae.env
-    bc_agent = RlLibAgent(bc_policy, 0, base_env.featurize_state_mdp)
-    print(trainer_path)
-    ppo_agent = load_agent(trainer_path, policy_id="ppo", agent_index=1)
+    hp_agent = RlLibAgent(hp_policy, order, base_env.featurize_state_mdp)
+    ppo_agent = load_agent(trainer_path, policy_id="ppo", agent_index=1-order)
 
     ae = AgentEvaluator.from_layout_name(
         mdp_params={"layout_name": layout, "old_dynamics": True},
         env_params={"horizon": 400},
     )
     if order == 0:
-        ap = AgentPair(ppo_agent, bc_agent)
+        ap = AgentPair(hp_agent, ppo_agent)
     else:
-        ap = AgentPair(bc_agent, ppo_agent)
-    result = ae.evaluate_agent_pair(ap, 1, 400)
+        ap = AgentPair(ppo_agent, hp_agent)
+    result = ae.evaluate_agent_pair(ap, 5, 400)
     return result, result["ep_returns"]
 
-def evaluate_dt_ppo(model, params, trainer_path, layout, max_len = 10, target_return=100):
+def evaluate_hp_dt(model, params, hp_model_path, layout, max_len=10, target_return=100, order=0):
+    """
+    This function evaluates the performance between a BC model (trained with the human training data) and a human proxy model (trained with the human testing data)
+    The order parameter determines the placement of the agents
+    """
+    hp_model, hp_params = load_bc_model(hp_model_path)
+    hp_policy = BehaviorCloningPolicy.from_model(
+        hp_model, hp_params, stochastic=True
+    )
+    base_ae = _get_base_ae(params)
+    base_env = base_ae.env
+    def featurize_fn(state):
+        return base_env.featurize_state_mdp(state)
+    dt = DTAgent(
+        model, agent_index=1-order, featurize_fn=featurize_fn,max_len=max_len,target_return=target_return
+    )
+    hp_agent = RlLibAgent(hp_policy, order, base_env.featurize_state_mdp)
+    ae = AgentEvaluator.from_layout_name(
+        mdp_params={"layout_name": layout, "old_dynamics": True},
+        env_params={"horizon": 400},
+    )
+    if order == 0:
+        ap = AgentPair(hp_agent, dt, dt=2)
+    else:
+        ap = AgentPair(dt, hp_agent, dt=1)
+    result = ae.evaluate_agent_pair(ap, 5, 400)
+    hp_actions = []
+    predicted_actions = []
+    for i in range(len(result["ep_actions"])):
+        for action in result["ep_actions"][i]:
+            hp_actions.append(Action.ACTION_TO_INDEX[action[order]])
+    for i in range(len(result["ep_infos"])):
+        for info in result["ep_infos"][i]:
+            predicted_actions.append(info['agent_infos'][1-order]['action1_predict'])
+    idx = np.where(np.array(hp_actions) != 4)[0]
+    hp_actions = np.array(hp_actions)[idx]
+    predicted_actions = np.array(predicted_actions)[idx]
+    acc = 0
+    for i in range(len(hp_actions)):
+        if hp_actions[i] == predicted_actions[i]:
+            acc += 1
+    acc = acc / len(hp_actions)
+    return result, result["ep_returns"], acc
+
+def evaluate_hp_tom(model, params, hp_model_path, trainer_path, layout, max_len=10, target_return=100, beta=2, order=0):
+    base_ae = _get_base_ae(params)
+    ppo_agent = load_agent(trainer_path, policy_id="ppo", agent_index=1)
+    base_env = base_ae.env
+    def featurize_fn(state):
+        return base_env.featurize_state_mdp(state)
+    tom = ToMAugmentedAgent(
+        model, ppo_agent, agent_index=1-order, featurize_fn=featurize_fn, max_len=max_len, target_return=target_return,beta=beta
+    )
+    hp_model, hp_params = load_bc_model(hp_model_path)
+    hp_policy = BehaviorCloningPolicy.from_model(
+        hp_model, hp_params, stochastic=True
+    )
+    hp_agent = RlLibAgent(hp_policy, order, base_env.featurize_state_mdp)
+    ae = AgentEvaluator.from_layout_name(
+        mdp_params={"layout_name": layout, "old_dynamics": True},
+        env_params={"horizon": 400},
+    )
+    if order == 0:
+        ap = AgentPair(hp_agent,tom, dt=2)
+    else:
+        ap = AgentPair(tom, hp_agent, dt=1)
+    result = ae.evaluate_agent_pair(ap, 5, 400)
+    return result, result["ep_returns"]
+
+
+def evaluate_dt_ppo(model, params, trainer_path, layout, order = 0, max_len = 10, target_return=100):
     base_ae = _get_base_ae(params)
     ppo_agent = load_agent(trainer_path, policy_id="ppo", agent_index=1)
     base_env = base_ae.env
     def featurize_fn(state):
         return base_env.featurize_state_mdp(state)
     dt = DTAgent(
-        model, agent_index=0, featurize_fn=featurize_fn,max_len=max_len,target_return=target_return
+        model, agent_index=1-order, featurize_fn=featurize_fn,max_len=max_len,target_return=target_return
     )
     ae = AgentEvaluator.from_layout_name(
         mdp_params={"layout_name": layout, "old_dynamics": True},
         env_params={"horizon": 400},
     )
-    ap = AgentPair(dt, ppo_agent, dt=1)
+    if order == 0:
+        ap = AgentPair(ppo_agent ,dt) 
+    else:
+        ap = AgentPair(dt, ppo_agent)
     result = ae.evaluate_agent_pair(ap, 10, 400)
-    return result, result["ep_returns"]
+    hp_actions = []
+    predicted_actions = []
+    if order == 0:
+        for i in range(len(result["ep_actions"])):
+            for action in result["ep_actions"][i]:
+                hp_actions.append(Action.ACTION_TO_INDEX[action[0]])
+        for i in range(len(result["ep_infos"])):
+            for info in result["ep_infos"][i]:
+                predicted_actions.append(info['agent_infos'][1]['action1_predict'])
+    else:
+        for i in range(len(result["ep_actions"])):
+            for action in result["ep_actions"][i]:
+                hp_actions.append(Action.ACTION_TO_INDEX[action[1]])
+        for i in range(len(result["ep_infos"])):
+            for info in result["ep_infos"][i]:
+                predicted_actions.append(info['agent_infos'][0]['action1_predict'])
+    acc = 0
+    for i in range(len(hp_actions)):
+        if hp_actions[i] == predicted_actions[i]:
+            acc += 1
+    acc = acc / len(hp_actions)
+    return result, result["ep_returns"], acc
 
 def evaluate_human_dt(model, params, layout, max_len = 10, target_return=100):
     base_ae = _get_base_ae(params)
@@ -355,16 +477,18 @@ def eval_models(order):
     return PSP_PSP, hp_PSP, hp_PBC, hp_BC, bc_PBC
 
 def dt_ppo_experiment():
-    result = {}
+    result = [{},{}]
     model = DecisionTransformer(state_dim=96, act_dim=6, 
                                 hidden_size=128, max_length=10,
                                 max_ep_len=1250,
                                 n_layer=3, n_head=1, n_inner=4*256, activation_function='relu',
                                 resid_pdrop=0.1, attn_pdrop=0.1, n_positions=1024)
-    for i in range(5):
-        DEFAULT_PARAMS["mdp_params"]["layout_name"] = layouts[i]
-        _, res = evaluate_dt_ppo(model, DEFAULT_PARAMS, ppo_sp[i], layouts[i], target_return=dt_tg[i])
-        result[layouts[i]] = (np.mean(res), np.std(res) / len(res) ** 0.5)
+    for order in [0,1]:
+        for i in range(5):
+            DEFAULT_PARAMS["mdp_params"]["layout_name"] = layouts[i]
+            _, res, acc = evaluate_dt_ppo(model, DEFAULT_PARAMS, ppo_sp[i], layouts[i], target_return=dt_tg[i], order=order)
+            print(acc)
+            result[order][layouts[i]] = (np.mean(res), np.std(res) / len(res) ** 0.5, acc)
     
     print(result)
     # {'cramped_room': (104.0, 7.899367063252599), 'asymmetric_advantages': (116.0, 16.685322891691367), 'coordination_ring': (98.0, 6.603029607687671), 'forced_coordination': (20.0, 4.898979485566356), 'counter_circuit_o_1order': (26.0, 4.049691346263317)}
@@ -463,5 +587,3 @@ def human_tom_experiment(x):
         result[layouts[x]] = (np.mean(res), np.std(res) / len(res) ** 0.5)
     
     print(result)
-
-# human_tom_experiment(1)

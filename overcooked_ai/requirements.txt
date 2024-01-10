@@ -259,9 +259,9 @@ tensorboard=2.12.3=pypi_0
 tensorboard-data-server=0.7.2=pypi_0
 tensorboard-plugin-wit=1.8.1=pypi_0
 tensorboardx=2.6=pypi_0
-tensorflow-estimator=2.12.0=pypi_0
-tensorflow-io-gcs-filesystem=0.35.0=pypi_0
-tensorflow-macos=2.12.0=pypi_0
+tensorflow=2.10.0=pypi_0
+tensorflow-estimator=2.10.0=pypi_0
+tensorflow-io-gcs-filesystem 0.34.0=pypi_0
 termcolor=2.4.0=pypi_0
 threadpoolctl=3.2.0=pypi_0
 tifffile=2023.12.9=pypi_0

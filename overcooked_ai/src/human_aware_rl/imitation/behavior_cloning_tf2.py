@@ -59,10 +59,10 @@ DEFAULT_EVALUATION_PARAMS = {
 
 DEFAULT_BC_PARAMS = {
     "eager": True,
-    "use_lstm": False,
+    "use_lstm":True,
     "cell_size": 256,
     "data_params": DEFAULT_DATA_PARAMS,
-    "mdp_params": {"layout_name": "cramped_room", "old_dynamics": False},
+    "mdp_params": {"layout_name": "cramped_room", "old_dynamics": True},
     "env_params": DEFAULT_ENV_PARAMS,
     "mdp_fn_params": {},
     "mlp_params": DEFAULT_MLP_PARAMS,
@@ -148,9 +148,10 @@ def load_data(bc_params, verbose=False):
     processed_trajs = get_human_human_trajectories(
         **bc_params["data_params"], silent=not verbose
     )
-    inputs, targets = (
+    inputs, targets0, targets1 = (
         processed_trajs["ep_states"],
-        processed_trajs["ep_actions"],
+        processed_trajs["ep_action0s"], 
+        processed_trajs["ep_action1s"],
     )
 
     if bc_params["use_lstm"]:
@@ -165,12 +166,14 @@ def load_data(bc_params, verbose=False):
                 )
             ),
         )
-        targets_padded = _pad(targets, default=np.zeros(1))
+        targets0_padded = _pad(targets0, default=np.zeros(1))
+        targets1_padded = _pad(targets1, default=np.zeros(1))
         seq_t = np.dstack(seq_padded).transpose((2, 0, 1))
-        targets_t = np.dstack(targets_padded).transpose((2, 0, 1))
-        return seq_t, seq_lens, targets_t
+        targets0_t = np.dstack(targets0_padded).transpose((2, 0, 1))
+        targets1_t = np.dstack(targets1_padded).transpose((2, 0, 1))
+        return seq_t, seq_lens, targets0_t, targets1_t
     else:
-        return np.vstack(inputs), None, np.vstack(targets)
+        return np.vstack(inputs), None, np.vstack(targets0), np.vstack(targets1)
 
 
 def build_bc_model(use_lstm=True, eager=False, **kwargs):
@@ -183,8 +186,7 @@ def build_bc_model(use_lstm=True, eager=False, **kwargs):
 
 
 def train_bc_model(model_dir, bc_params, verbose=False):
-    inputs, seq_lens, targets = load_data(bc_params, verbose)
-
+    inputs, seq_lens, targets0, targets1 = load_data(bc_params, verbose)
     training_params = bc_params["training_params"]
 
     if training_params["use_class_weights"]:
@@ -206,12 +208,14 @@ def train_bc_model(model_dir, bc_params, verbose=False):
     if bc_params["use_lstm"]:
         loss = [
             keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+            keras.losses.SparseCategoricalCrossentropy(from_logits=True),
             None,
             None,
         ]
-        metrics = [["sparse_categorical_accuracy"], [], []]
+        metrics = [["sparse_categorical_accuracy"], ["sparse_categorical_accuracy"], [], []]
     else:
-        loss = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+        loss_1 = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+        loss = [loss_1, loss_1]
         metrics = ["sparse_categorical_accuracy"]
     model.compile(
         optimizer=keras.optimizers.Adam(training_params["learning_rate"]),
@@ -244,7 +248,7 @@ def train_bc_model(model_dir, bc_params, verbose=False):
     # Create input dict for both models
     N = inputs.shape[0]
     inputs = {"Overcooked_observation": inputs}
-    targets = {"logits": targets}
+    targets = {"a0": targets0, "a1": targets1}
 
     # Inputs unique to lstm model
     if bc_params["use_lstm"]:
@@ -296,6 +300,7 @@ def load_bc_model(model_dir, verbose=False):
     """
     if verbose:
         print("Loading bc model from ", model_dir)
+    tf.compat.v1.enable_eager_execution()
     model = keras.models.load_model(model_dir, custom_objects={"tf": tf})
     with open(os.path.join(model_dir, "metadata.pickle"), "rb") as f:
         bc_params = pickle.load(f)
@@ -371,9 +376,10 @@ def _build_model(observation_shape, action_shape, mlp_params, **kwargs):
         )(x)
 
     ## output layer
-    logits = keras.layers.Dense(action_shape[0], name="logits")(x)
+    a0 = keras.layers.Dense(action_shape[0], name="a0")(x)
+    a1 = keras.layers.Dense(action_shape[0], name="a1")(x)
 
-    return keras.Model(inputs=inputs, outputs=logits)
+    return keras.Model(inputs=inputs, outputs=[a0, a1])
 
 
 def _build_lstm_model(
@@ -420,12 +426,16 @@ def _build_lstm_model(
     )(inputs=x, mask=mask, initial_state=[h_in, c_in])
 
     ## output layer
-    logits = keras.layers.TimeDistributed(
-        keras.layers.Dense(action_shape[0]), name="logits"
+    a0 = keras.layers.TimeDistributed(
+        keras.layers.Dense(action_shape[0]), name="a0"
+    )(lstm_out)
+
+    a1 = keras.layers.TimeDistributed(
+        keras.layers.Dense(action_shape[0]), name="a1"
     )(lstm_out)
 
     return keras.Model(
-        inputs=[obs_in, seq_in, h_in, c_in], outputs=[logits, h_out, c_out]
+        inputs=[obs_in, seq_in, h_in, c_in], outputs=[a0, a1, h_out, c_out]
     )
 
 
@@ -581,9 +591,10 @@ class BehaviorCloningPolicy(RllibPolicy):
         # Run the model
         with self.context:
             action_logits, states = self._forward(obs_batch, state_batches)
-
+        action0 = action_logits[0]
+        action1 = action_logits[1]
         # Softmax in numpy to convert logits to probabilities
-        action_probs = softmax(action_logits)
+        action_probs = softmax(action0)
         if self.stochastic:
             # Sample according to action_probs for each row in the output
             actions = np.array(
@@ -593,9 +604,9 @@ class BehaviorCloningPolicy(RllibPolicy):
                 ]
             )
         else:
-            actions = np.argmax(action_logits, axis=1)
-
-        return actions, states, {"action_dist_inputs": action_logits}
+            actions = np.argmax(action0, axis=1)
+        action1_predict = np.argmax(action1, axis=1)
+        return actions, states, {"action_dist_inputs": action0, "action1_predict": action1_predict}
 
     def get_initial_state(self):
         """
@@ -643,9 +654,10 @@ class BehaviorCloningPolicy(RllibPolicy):
             model_out = self.model.predict(
                 [obs_batch, seq_lens] + state_batches
             )
-            logits, states = model_out[0], model_out[1:]
-            logits = logits.reshape((logits.shape[0], -1))
-            return logits, states
+            a0, a1, h, c = model_out
+            a0 = a0.reshape((a0.shape[0], -1))
+            a1 = a1.reshape((a1.shape[0], -1))
+            return [a0, a1], [h, c]
         else:
             return self.model.predict(obs_batch, verbose=0), []
 

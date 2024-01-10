@@ -240,6 +240,7 @@ def convert_joint_df_trajs_to_overcooked_single(
         average_returns[layout_name] = average_returns[layout_name] / (2 * num_trials)
     print(max_returns)
     print(average_returns)
+    # exit()
     return trajectories
             
 def df_traj_to_python_traj(
@@ -354,7 +355,8 @@ def build_dataset():
         # ]
     ]
     train_data_paths = [
-        CLEAN_2019_HUMAN_DATA_ALL,
+        # CLEAN_2019_HUMAN_DATA_TEST,
+        CLEAN_2019_HUMAN_DATA_TRAIN,
         # CLEAN_2020_HUMAN_DATA_ALL
     ]
     # test_data_paths = [
@@ -373,9 +375,9 @@ def build_dataset():
     #     bc_params["data_params"]["data_path"] = data_path
     #     test_dataset += load_data(bc_params)
 
-    # transfer 55 trajectories from test to train
-    train_dataset = train_dataset[:-20]
-    test_dataset = train_dataset[-20:]
+    random.shuffle(train_dataset)
+    train_dataset = train_dataset[:-15]
+    test_dataset = train_dataset[-15:]
     train_save_path = os.path.join(DATA_DIR, "train.pickle")
     test_save_path = os.path.join(DATA_DIR, "test.pickle")
     with open(train_save_path, "wb") as f:
@@ -479,6 +481,6 @@ class traj_buffer():
 if __name__ == "__main__":
     build_dataset()
     # # train_dataset, test_dataset = build_dataset()
-    buffer = traj_buffer(os.path.join(DATA_DIR, "train.pickle"))
-    data = buffer.get_batch(1)
-    print(data)
+    # buffer = traj_buffer(os.path.join(DATA_DIR, "train.pickle"))
+    # data = buffer.get_batch(1)
+    # print(data)

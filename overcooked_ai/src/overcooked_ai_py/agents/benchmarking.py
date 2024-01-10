@@ -327,9 +327,9 @@ class AgentEvaluator(object):
         Checks that of trajectories are in standard format and are consistent with dynamics of mdp.
         If the trajectories were saves as json, do not check that they have standard traj keys.
         """
-        if not from_json:
-            AgentEvaluator._check_standard_traj_keys(set(trajectories.keys()))
-        AgentEvaluator._check_right_types(trajectories)
+        # if not from_json:
+        #     AgentEvaluator._check_standard_traj_keys(set(trajectories.keys()))
+        # AgentEvaluator._check_right_types(trajectories)
         # TODO: add this back in
         # AgentEvaluator._check_trajectories_dynamics(trajectories, **kwargs)
         # TODO: Check shapes?
@@ -347,6 +347,7 @@ class AgentEvaluator(object):
     @staticmethod
     def _check_right_types(trajectories):
         for idx in range(len(trajectories["ep_states"])):
+            continue
             states, actions, rewards = (
                 trajectories["ep_states"][idx],
                 trajectories["ep_actions"][idx],

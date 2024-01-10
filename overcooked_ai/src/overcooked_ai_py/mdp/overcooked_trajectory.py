@@ -32,7 +32,7 @@ The standard format for Overcooked trajectories is:
 """
 
 TIMESTEP_TRAJ_KEYS = set(
-    ["ep_states", "ep_actions", "ep_rewards", "ep_dones", "ep_infos"]
+    ["ep_states", "ep_action0s", "ep_action1s", "ep_rewards", "ep_dones", "ep_infos"]
 )
 EPISODE_TRAJ_KEYS = set(
     ["ep_returns", "ep_lengths", "mdp_params", "env_params"]

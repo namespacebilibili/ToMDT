@@ -113,7 +113,10 @@ class RlLibAgent(Agent):
         )
         agent_action = Action.INDEX_TO_ACTION[action_idx]
 
-        agent_action_info = {"action_probs": action_probabilities}
+        if "action1_predict" in info.keys():
+            agent_action_info = {"action_probs": action_probabilities, "action1_predict": info["action1_predict"]}
+        else:
+            agent_action_info = {"action_probs": action_probabilities}
         self.rnn_state = rnn_state
 
         return agent_action, agent_action_info

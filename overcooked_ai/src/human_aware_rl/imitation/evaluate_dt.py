@@ -45,7 +45,7 @@ class DTAgent(Agent):
         self.agent_index = agent_index
     
     def load(self):
-        path = f"/Users/apple/Desktop/AI/CoRe/CoRe/overcook/model/dt_{self.max_len}.pth"
+        path = f"./model/dt_{self.max_len}.pth"
         self.model.load_state_dict(torch.load(path, map_location=self.device))
 
     def reset(self):
@@ -73,10 +73,10 @@ class DTAgent(Agent):
             self.history["ep_timesteps"],
         )
         # print(rtg_preds)
-        return torch.softmax(action0_preds, dim=0).cpu().detach().numpy()
+        return torch.softmax(action0_preds, dim=0).cpu().detach().numpy(), torch.argmax(action1_preds, dim=0).item()
     
     def action(self, state):
-        action_probs = self.action_probabilities(state)
+        action_probs, action1 = self.action_probabilities(state)
         # sample action from action_probs
         action = np.random.choice(
             np.array(Action.ALL_ACTIONS, dtype=object), p=action_probs
@@ -86,7 +86,7 @@ class DTAgent(Agent):
         # action = Action.ALL_ACTIONS[np.argmax(action_probs)]
         # print(action)
 
-        agent_action_info = {"action_probs": action_probs}
+        agent_action_info = {"action_probs": action_probs, 'action1_predict': action1}
         return action, agent_action_info
 
     def update(self, self_action, teammate_action, reward):

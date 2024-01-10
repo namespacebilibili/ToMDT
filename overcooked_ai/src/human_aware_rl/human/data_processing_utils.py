@@ -150,7 +150,8 @@ def convert_joint_df_trajs_to_overcooked_single(
     single_agent_trajectories = {
         # With shape (n_episodes, game_len), where game_len might vary across games:
         "ep_states": [],
-        "ep_actions": [],
+        "ep_action0s": [],
+        "ep_action1s": [],
         "ep_rewards": [],  # Individual reward values
         "ep_dones": [],  # Individual done values
         "ep_infos": [],
@@ -247,22 +248,25 @@ def joint_state_trajectory_to_single(
 
     # Getting trajectory for each agent
     for agent_idx in player_indices_to_convert:
-        ep_obs, ep_acts, ep_dones = [], [], []
+        ep_obs, ep_act0s, ep_act1s, ep_dones = [], [], [], []
         for i in range(len(states)):
-            state, action = states[i], joint_actions[i][agent_idx]
+            state, action0, action1 = states[i], joint_actions[i][agent_idx], joint_actions[i][1-agent_idx]
 
             if featurize_states:
-                action = np.array([Action.ACTION_TO_INDEX[action]]).astype(int)
+                action0 = np.array([Action.ACTION_TO_INDEX[action0]]).astype(int)
+                action1 = np.array([Action.ACTION_TO_INDEX[action1]]).astype(int)
                 state = env.featurize_state_mdp(state)[agent_idx]
 
             ep_obs.append(state)
-            ep_acts.append(action)
+            ep_act0s.append(action0)
+            ep_act1s.append(action1)
             ep_dones.append(False)
 
         ep_dones[-1] = True
 
         trajectories["ep_states"].append(ep_obs)
-        trajectories["ep_actions"].append(ep_acts)
+        trajectories["ep_action0s"].append(ep_act0s)
+        trajectories["ep_action1s"].append(ep_act1s)
         trajectories["ep_rewards"].append(rewards)
         trajectories["ep_dones"].append(ep_dones)
         trajectories["ep_infos"].append([{}] * len(rewards))

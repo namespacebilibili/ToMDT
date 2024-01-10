@@ -275,7 +275,7 @@ class ToMAugmentedAgent(Agent):
         self.load()
         self.reset()
     def load(self):
-        path = f"/Users/apple/Desktop/AI/CoRe/CoRe/overcook/model/dt_{self.max_len}.pth"
+        path = f"../../human_aware_rl/imitation/model/dt_{self.max_len}.pth"
         self.model.load_state_dict(torch.load(path, map_location=self.device))
     def reset(self):
         self.agent.reset()

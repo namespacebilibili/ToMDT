@@ -511,6 +511,7 @@ class OvercookedEnv(object):
         NOTE: this is the standard trajectories format used throughout the codebase
         """
         trajectories = {k: [] for k in DEFAULT_TRAJ_KEYS}
+        trajectories["ep_actions"] = []
         metadata_fn = (lambda x: {}) if metadata_fn is None else metadata_fn
         metadata_info_fn = (
             (lambda x: "") if metadata_info_fn is None else metadata_info_fn
