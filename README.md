@@ -4,7 +4,7 @@ This is the repo for the PKU 2023 CoRe Submission *Decision Transformer for Mode
 
 > Our code is based on the [Overcooked-AI](https://humancompatibleai.github.io) environment.
 
-## Introduction 🥘
+## Environment Introduction 🥘
 
 Overcooked-AI is a benchmark environment for fully cooperative human-AI task performance, based on the wildly popular video game [Overcooked](http://www.ghosttowngames.com/overcooked/).
 
